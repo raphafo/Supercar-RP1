@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1:3306
--- Généré le : mar. 23 sep. 2025 à 07:02
--- Version du serveur : 9.1.0
--- Version de PHP : 8.3.14
+-- Généré le : ven. 24 avr. 2026 à 18:04
+-- Version du serveur : 8.4.7
+-- Version de PHP : 8.3.28
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,6 +20,18 @@ SET time_zone = "+00:00";
 --
 -- Base de données : `supercar`
 --
+
+DELIMITER $$
+--
+-- Procédures
+--
+DROP PROCEDURE IF EXISTS `notifier_admin`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `notifier_admin` (IN `p_message` VARCHAR(255))   BEGIN
+    INSERT INTO `notifications` (`message`)
+    VALUES (p_message);
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -127,6 +139,18 @@ INSERT INTO `essai` (`id`, `nom`, `prenom`, `email`, `lieurecup`, `lieudepot`, `
 (2, 'Gabriella', 'Zalika', 'nkpweeingrid@gmail.com', 'douala', 'yaounde ', '2025-09-24', '2025-09-30', '15:30:00', '2025-09-22 15:12:28', 'En cours', 1, 6),
 (3, 'Maurice', 'smith', 'maurice@gmail.com', 'douala', 'yaounde', '2025-10-09', '2025-10-12', '15:20:00', '2025-09-22 15:15:01', 'Refusé', 2, 5);
 
+--
+-- Déclencheurs `essai`
+--
+DROP TRIGGER IF EXISTS `after_insert_essai`;
+DELIMITER $$
+CREATE TRIGGER `after_insert_essai` AFTER INSERT ON `essai` FOR EACH ROW BEGIN
+    CALL notifier_admin('Nouvelle demande d'essai reçue');
+END
+$$
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -183,6 +207,37 @@ INSERT INTO `maintenance` (`id`, `titre`, `image`) VALUES
 (5, 'Changer de filtre', 'img4.jpg'),
 (6, 'Changer vos pneus', 'img1.jpg'),
 (7, 'changer vos dents', 'pieces.jpg');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `notifications`
+--
+
+DROP TABLE IF EXISTS `notifications`;
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `message` varchar(255) NOT NULL,
+  `date_notif` datetime DEFAULT CURRENT_TIMESTAMP,
+  `lu` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `message`, `date_notif`, `lu`) VALUES
+(1, 'Nouvelle demande d\'essai reçue', '2025-11-21 11:03:00', 1),
+(2, 'Nouvelle demande d\'essai reçue', '2025-10-07 11:41:00', 1),
+(3, 'Nouvelle demande d\'essai reçue', '2025-10-07 11:39:00', 1),
+(4, 'Nouvelle demande d\'essai reçue', '2025-10-06 15:06:00', 1),
+(5, 'Test notification', '2025-10-06 14:48:00', 1),
+(6, 'Nouvelle demande d\'essai reçue', '2025-11-21 11:03:00', 1),
+(7, 'Nouvelle demande d\'essai reçue', '2025-10-07 11:41:00', 1),
+(8, 'Nouvelle demande d\'essai reçue', '2025-10-07 11:39:00', 1),
+(9, 'Nouvelle demande d\'essai reçue', '2025-10-06 15:06:00', 1),
+(10, 'Test notification', '2025-10-06 14:48:00', 1);
 
 -- --------------------------------------------------------
 
@@ -260,6 +315,7 @@ CREATE TABLE IF NOT EXISTS `voitures` (
   `description` text,
   `image` varchar(255) DEFAULT NULL,
   `disponible` tinyint(1) NOT NULL DEFAULT '1',
+  `date_ajout` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -267,26 +323,37 @@ CREATE TABLE IF NOT EXISTS `voitures` (
 -- Déchargement des données de la table `voitures`
 --
 
-INSERT INTO `voitures` (`id`, `marque`, `annee`, `prix`, `description`, `image`, `disponible`) VALUES
-(1, 'BMW X5', 2023, 500.00, 'Intérieur spacieux et luxueux, conçu pour le confort et les performances robustes.', 'images/bmwx5.jpeg', 1),
-(2, 'BMW XM', 2023, 500.00, 'Moteur V8 biturbo 4.4L + moteur électrique, puissance combinée de 653 chevaux, intérieur luxueux et design audacieux.', 'images/bmwx.jpg', 1),
-(3, 'BMW G60', 2024, 500.00, 'Disponible en essence, diesel, hybride rechargeable et électrique, avec une puissance allant jusqu\'à 601 chevaux (i5 M60).', 'images/G60.jpg', 1),
-(4, 'BMW X3', 2023, 500.00, 'Disponible en essence, diesel et hybride rechargeable, puissance de 184 à 510 chevaux.', 'images/X3.jpg', 1),
-(5, 'BMW X7', 2024, 500.00, 'Jusqu\'à 7 places, suspensions adaptatives, finitions en cuir, écran multimédia avancé', 'images/X7.jpg', 1),
-(6, 'BMW iX', 2024, 500.00, 'Jusqu’à 523 chevaux, technologie avancée avec BMW iDrive 8 et réalité augmentée.', 'images/IX.jpg', 1),
-(7, 'Mercedes EQS Sedan', 2024, 300.00, 'Le Mercedes EQS Sedan est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/eqs.jpg', 1),
-(8, 'Mercedes EQS SUV', 2024, 600.00, 'Le Mercedes EQS SUV est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/eqssuv.jpg', 1),
-(9, 'Mercedes Grand Sedan', 2024, 200.00, 'Le Mercedes Grand Sedan est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/grandsedan.jpg', 1),
-(10, 'Mercedes CLE Cabriolet', 2024, 200.00, 'Le Mercedes CLE Cabriolet est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/clecabriolet.jpg', 1),
-(11, 'Mercedes G-Class SUV', 2024, 200.00, 'Le Mercedes G-Class SUV est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/gsuv.jpeg', 1),
-(12, 'Mercedes GLE Coupe', 2024, 200.00, 'Le Mercedes GLE Coupe est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/glecoupe.jpg', 1),
-(13, 'Toyota 2000 GT', 1967, 500.00, 'Une voiture de sport emblématique des années 1960, conçue en collaboration avec Yamaha. Elle est équipée d\'un moteur avant central et d\'une transmission aux roues arrière.', 'images/toy1.jpeg', 1),
-(14, 'Toyota Supra', 2020, 500.00, 'La Toyota Supra est une voiture de sport qui continue de captiver les passionnés d\'automobile avec ses performances et son design. La Supra moderne, notamment la GR Supra, est équipée d\'un moteur turbo de 3,0 litres en ligne. Elle peut passer de 0 à 100 km/h en seulement 3,9 secondes.', 'images/toy2.jpg', 1),
-(15, 'Toyota MR2', 1995, 500.00, 'Une voiture de sport compacte, connue pour son agilité et ses performances. La MR2 est appréciée pour sa maniabilité et son plaisir de conduite, ce qui en fait une excellente voiture pour les amateurs de sport automobile.', 'images/toy5.jpeg', 1),
-(16, 'Toyota Camry', 2023, 500.00, 'Berline intermédiaire réputée pour son confort, sa fiabilité et ses performances. La Camry est idéale pour les trajets quotidiens et les longs voyages.', 'images/toy7.jpeg', 1),
-(17, 'Toyota 86', 2021, 500.00, 'Voiture de sport compacte et agile, appréciée pour ses performances et son plaisir de conduite. La Toyota 86 est conçue pour offrir une expérience de conduite sportive et engageante, idéale pour les amateurs de sensations fortes.', 'images/toy11.jpeg', 1),
-(18, 'Toyota  RAV4', 2021, 6000.00, 'SUV populaire, apprécié pour sa polyvalence et ses performances. La RAV4 est idéale pour des trajets quotidiens et les aventures en plein air, offrant confort et fiabilité.', 'images/toy12.jpeg', 0),
-(22, 'mercedes audi', 2025, 5000.00, 'belle voiture', 'images/68c3c851147f8.png', 1);
+INSERT INTO `voitures` (`id`, `marque`, `annee`, `prix`, `description`, `image`, `disponible`, `date_ajout`) VALUES
+(1, 'BMW X5', 2023, 500.00, 'Intérieur spacieux et luxueux, conçu pour le confort et les performances robustes.', 'images/bmwx5.jpeg', 1, NULL),
+(2, 'BMW XM', 2023, 500.00, 'Moteur V8 biturbo 4.4L + moteur électrique, puissance combinée de 653 chevaux, intérieur luxueux et design audacieux.', 'images/bmwx.jpg', 1, NULL),
+(3, 'BMW G60', 2024, 500.00, 'Disponible en essence, diesel, hybride rechargeable et électrique, avec une puissance allant jusqu\'à 601 chevaux (i5 M60).', 'images/G60.jpg', 1, NULL),
+(4, 'BMW X3', 2023, 500.00, 'Disponible en essence, diesel et hybride rechargeable, puissance de 184 à 510 chevaux.', 'images/X3.jpg', 1, NULL),
+(5, 'BMW X7', 2024, 500.00, 'Jusqu\'à 7 places, suspensions adaptatives, finitions en cuir, écran multimédia avancé', 'images/X7.jpg', 1, NULL),
+(6, 'BMW iX', 2024, 500.00, 'Jusqu’à 523 chevaux, technologie avancée avec BMW iDrive 8 et réalité augmentée.', 'images/IX.jpg', 1, NULL),
+(7, 'Mercedes EQS Sedan', 2024, 300.00, 'Le Mercedes EQS Sedan est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/eqs.jpg', 1, NULL),
+(8, 'Mercedes EQS SUV', 2024, 600.00, 'Le Mercedes EQS SUV est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/eqssuv.jpg', 1, NULL),
+(9, 'Mercedes Grand Sedan', 2024, 200.00, 'Le Mercedes Grand Sedan est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/grandsedan.jpg', 1, NULL),
+(10, 'Mercedes CLE Cabriolet', 2024, 200.00, 'Le Mercedes CLE Cabriolet est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/clecabriolet.jpg', 1, NULL),
+(11, 'Mercedes G-Class SUV', 2024, 200.00, 'Le Mercedes G-Class SUV est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/gsuv.jpeg', 1, NULL),
+(12, 'Mercedes GLE Coupe', 2024, 200.00, 'Le Mercedes GLE Coupe est un véhicule électrique de luxe offrant un confort exceptionnel et des performances impressionnantes.', 'images/glecoupe.jpg', 1, NULL),
+(13, 'Toyota 2000 GT', 1967, 500.00, 'Une voiture de sport emblématique des années 1960, conçue en collaboration avec Yamaha. Elle est équipée d\'un moteur avant central et d\'une transmission aux roues arrière.', 'images/toy1.jpeg', 1, NULL),
+(14, 'Toyota Supra', 2020, 500.00, 'La Toyota Supra est une voiture de sport qui continue de captiver les passionnés d\'automobile avec ses performances et son design. La Supra moderne, notamment la GR Supra, est équipée d\'un moteur turbo de 3,0 litres en ligne. Elle peut passer de 0 à 100 km/h en seulement 3,9 secondes.', 'images/toy2.jpg', 1, NULL),
+(15, 'Toyota MR2', 1995, 500.00, 'Une voiture de sport compacte, connue pour son agilité et ses performances. La MR2 est appréciée pour sa maniabilité et son plaisir de conduite, ce qui en fait une excellente voiture pour les amateurs de sport automobile.', 'images/toy5.jpeg', 1, NULL),
+(16, 'Toyota Camry', 2023, 500.00, 'Berline intermédiaire réputée pour son confort, sa fiabilité et ses performances. La Camry est idéale pour les trajets quotidiens et les longs voyages.', 'images/toy7.jpeg', 1, NULL),
+(17, 'Toyota 86', 2021, 500.00, 'Voiture de sport compacte et agile, appréciée pour ses performances et son plaisir de conduite. La Toyota 86 est conçue pour offrir une expérience de conduite sportive et engageante, idéale pour les amateurs de sensations fortes.', 'images/toy11.jpeg', 1, NULL),
+(18, 'Toyota  RAV4', 2021, 6000.00, 'SUV populaire, apprécié pour sa polyvalence et ses performances. La RAV4 est idéale pour des trajets quotidiens et les aventures en plein air, offrant confort et fiabilité.', 'images/toy12.jpeg', 0, NULL),
+(22, 'mercedes audi', 2025, 5000.00, 'belle voiture', 'images/68c3c851147f8.png', 1, NULL);
+
+--
+-- Déclencheurs `voitures`
+--
+DROP TRIGGER IF EXISTS `before_insert_voiture`;
+DELIMITER $$
+CREATE TRIGGER `before_insert_voiture` BEFORE INSERT ON `voitures` FOR EACH ROW BEGIN
+    SET NEW.date_ajout = NOW();
+END
+$$
+DELIMITER ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
